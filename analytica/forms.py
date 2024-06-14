@@ -1,38 +1,8 @@
-from flask import Flask, render_template, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt
 import re, requests
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import Email, Length, DataRequired, ValidationError, EqualTo
-
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///projrect.db'
-app.config['SECRET_KEY'] = '99ede3e32af135ccb18ae609'
-db = SQLAlchemy(app)
-bycrypt = Bcrypt(app)
-
-
-class User(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
-    username = db.Column(db.String(length=30), nullable=False, unique=True)
-    email_address = db.Column(db.String(length=50), nullable=False, unique=True)
-    password_hash = db.Column(db.String(length=60), nullable=False)
-    analyzed_products_num = db.Column(db.Integer(), default=0, nullable=False)
-
-    @property
-    def password(self):
-        raise AttributeError('Password is not a readable attribute.')
-
-    @password.setter
-    def password(self, plain_text_password):
-        self.password_hash = bycrypt.generate_password_hash(plain_text_password) 
-
-    def check_password_correction(self, attempted_password):
-       return bycrypt.check_password_hash(self.password_hash, attempted_password)
-
-
+from analytica.models import User
 
 class RegisterForm(FlaskForm):
     
@@ -90,25 +60,4 @@ class ProductCodeForm(FlaskForm):
     product_url_or_code = StringField('Product URL or Code', validators=[DataRequired(), is_valid_url_or_code])
     submit = SubmitField(label='Analysis')
 
-
-
-
-
-@app.route('/', methods=['GET', 'POST'])
-@app.route('/home', methods=['GET', 'POST'])
-def home_page():
-    form = ProductCodeForm()
-    if form.validate_on_submit():
-        return redirect(url_for('dashboard_page'))
-    return render_template('home.html', form=form)
-
-
-
-@app.route('/dashboard')
-def dashboard_page():
-    return render_template('dashboard.html')
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
 
