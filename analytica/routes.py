@@ -14,6 +14,9 @@ def home_page():
         return redirect(url_for('dashboard_page'))
     return render_template('home.html', form=form)
 
+@app.route("/about")
+def about_page():
+    return render_template("about.html")
 
 
 @app.route('/dashboard')

@@ -1,0 +1,182 @@
+/* Reset some default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    color: #343a40;
+    /* font-family: "Inter", sans-serif; */
+    background-color: #FFFFEF
+    ;
+  
+  }
+  /* Navigation styles */
+  
+  
+  
+  
+  /* Header section styles */
+  .header-section {
+    text-align: center;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    margin-top: 2rem;
+  }
+  
+  .line {
+    width: 100px;
+    height: 2px;
+    background-color: #333;
+    margin: 1rem auto;
+  }
+  
+  .paragraph {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .header-1 {
+    /* margin-bottom: 32px; */
+    font-size: 40px;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  
+  }
+  
+  /* Card container styles */
+  
+  .cards-header {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 900; 
+  
+    letter-spacing: -0.5px;
+    color: #343a40;
+    
+  }
+  
+  .card-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 2rem;
+  }
+  
+  .card {
+    background-color: #FFFFCC;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin: 1rem;
+    padding: 1.5rem;
+    max-width: 250px;
+    text-align: center;
+  }
+  
+  .icon-container {
+    background-color: #A3A3CC;
+    border-radius: 50%;
+    display: inline-block;
+    height: 80px;
+    width: 80px;
+    margin-bottom: 1rem;
+  }
+  
+  .icon-container svg {
+    fill: #fff;
+    height: 40px;
+    width: 40px;
+    margin: 20px;
+  }
+  
+  .card h2 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+  }
+  
+  .card p {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  
+  /* Builders Container Styles */
+  .builders-container {
+    /* background-color: #f8f9fa; */
+    padding: 3rem 1rem;
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  
+  .builders-container .cards-header {
+    color: #343a40;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .builders-container p {
+    color: #6c757d;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .builders-container .dotted-list {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .builders-container .dotted-list li {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    padding: 1rem 1.5rem;
+    margin: 0.5rem;
+    font-size: 1.1rem;
+    color: #343a40;
+    transition: all 0.3s ease;
+  }
+  
+  .builders-container .dotted-list li:hover {
+    background-color: #343a40;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  
+  
+  
+  /* Footer Styles */
+  footer {
+    background-color: #333;
+    color: #fff;
+    padding: 2rem 0;
+  }
+  
+  .footer-container {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  
+  
+  .footer-bottom {
+    width: 100%;
+    text-align: center;
+    margin-top: 2rem;
+  }
+  
+  @media (max-width: 768px) {
+    .footer-container {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+  
+  

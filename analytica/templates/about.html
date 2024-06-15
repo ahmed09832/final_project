@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+
+{% block title %}
+    AboutPage
+{% endblock %}
+
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+{% endblock %}
+
+
+
+{% block content %}
+    <main>
+        <div class="header-section">
+        <h1 class="header-1">About Us</h1>
+        <div class="line"></div>
+        <p class="paragraph">The goal is to provide users with insights into product reviews by determining whether they express positive, negative, or neutral sentiment, summarizing the most important reviews.</p>
+        </div>
+
+        
+        <div class="card-container">
+        <!-- <h2 class="cards-header">Our Features</h2> -->
+        <h2 class="cards-header">Here are the features<br>we’re proud of</h2>
+
+        <div class="card">
+            <div class="icon-container">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M216,40H72A16,16,0,0,0,56,56V72H40A16,16,0,0,0,24,88V200a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V184h16a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM184,88v16H40V88Zm0,112H40V120H184v80Zm32-32H200V88a16,16,0,0,0-16-16H72V56H216Z"></path></svg>
+
+            
+            </div>
+            <h2>Web Scraping</h2>
+            <p>We scraping all the reviews for a particular product.</p>
+        </div>
+
+        <div class="card">
+            <div class="icon-container">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM80,108a12,12,0,1,1,12,12A12,12,0,0,1,80,108Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,176,108Zm-1.07,48c-10.29,17.79-27.4,28-46.93,28s-36.63-10.2-46.92-28a8,8,0,1,1,13.84-8c7.47,12.91,19.21,20,33.08,20s25.61-7.1,33.07-20a8,8,0,0,1,13.86,8Z"></path></svg>
+            </div>
+            <h2>Sentiment Analysis</h2>
+            <p>Determine the sentiment (positive, negative, or neutral) expressed in product reviews.</p>
+        </div>
+
+        <div class="card">
+            <div class="icon-container">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M229.66,58.34l-32-32a8,8,0,0,0-11.32,0l-96,96A8,8,0,0,0,88,128v32a8,8,0,0,0,8,8h32a8,8,0,0,0,5.66-2.34l96-96A8,8,0,0,0,229.66,58.34ZM124.69,152H104V131.31l64-64L188.69,88ZM200,76.69,179.31,56,192,43.31,212.69,64ZM224,128v80a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32h80a8,8,0,0,1,0,16H48V208H208V128a8,8,0,0,1,16,0Z"></path></svg>
+
+
+            </div>
+            <h2>Text Summarization</h2>
+            <p>Summarize the most important reviews about the product to provide a concise perception to the user.</p>
+        </div>
+
+        <div class="card">
+            <div class="icon-container">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#000000" viewBox="0 0 256 256"><path d="M224,216a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,216Zm-88-40V80a16,16,0,0,1,16-16h40a16,16,0,0,1,16,16v96a16,16,0,0,1-16,16H152A16,16,0,0,1,136,176Zm16,0h40V80H152ZM48,176V40A16,16,0,0,1,64,24h40a16,16,0,0,1,16,16V176a16,16,0,0,1-16,16H64A16,16,0,0,1,48,176Zm16,0h40V40H64Z"></path></svg>
+
+
+            </div>
+            <h2>Data Visualization</h2>
+            <p>Creating graphs to help users gain insights from the reviews.</p>
+        </div>
+        <!-- Repeat the .card section three more times -->
+        </div>
+
+        <div class="builders-container">
+        <h2 class="cards-header">Our Wizards</h2>
+        <p>Meet the wizards who make Analytica ready for you.</p>
+        <ul class="dotted-list">
+            <li>Ahmed Shawaly</li>
+            <li>Ahmed Abdo</li>
+            <li>Mohamed Amen</li>
+            <li>Fatma Ahmed</li>
+            <li>Sara Ahmed</li>
+            <li>Eman Ahmed</li>
+        </ul>
+        </div>
+
+
+        <footer>
+        <div class="footer-container"></div>
+            <div class="footer-bottom">
+            <p>&copy; 2024 Your Website. All rights reserved.</p>
+            </div>
+        </div>
+        </footer>
+        
+    </main>
+{% endblock %}
