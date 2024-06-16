@@ -12,6 +12,7 @@
 
   {% endblock %}
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
 </head>
 <body class="antialiased">
   <nav class="bg-[#FFA27F]">
@@ -26,9 +27,17 @@
           <div class="ml-10 flex items-baseline space-x-4">
             <a href="{{ url_for('home_page') }}" class="text-gray-800 hover:text-gray-600 px-3 py-2 rounded-md text-lg font-medium">Home</a>
             <a href="{{ url_for('about_page') }}" class="text-gray-800 hover:text-gray-600 px-3 py-2 rounded-md text-lg font-medium">About</a>
-            <a href="#" class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg font-medium hover:bg-gray-600">Log In</a>
-            <a href="{{ url_for('register_page') }}" class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg font-medium hover:bg-gray-600">Sign Up</a>
-          </div>
+            {% if current_user.is_authenticated %}
+            <a class="text-gray-800 hover:text-gray-600 px-3 py-2 rounded-md text-lg font-medium">Welcome, {{ current_user.username }}</a>
+            <a href="{{ url_for('logout_page') }}" class="text-gray-800 hover:text-gray-600 px-3 py-2 rounded-md text-lg font-medium">Log out</a>
+
+
+            {% else %}
+              <a href="{{ url_for('login_page') }}" class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg font-medium hover:bg-gray-600">Log In</a>
+              <a href="{{ url_for('register_page') }}" class="bg-gray-800 text-white px-4 py-2 rounded-md text-lg font-medium hover:bg-gray-600">Sign Up</a>
+            {% endif %}
+
+         </div>
         </div>
         <div class="md:hidden">
           <button type="button" class="text-gray-800 hover:text-gray-600 focus:outline-none" id="mobile-menu-toggle">
@@ -43,11 +52,31 @@
       <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
         <a href="{{ url_for('home_page') }}" class="block text-gray-800  px-3 py-2 rounded-md text-lg font-medium">Home</a>
         <a href="{{ url_for('about_page') }}" class="block text-gray-800   px-3 py-2 rounded-md text-lg font-medium">About</a>
-        <a href="#" class="block bg-gray-800 text-white px-3 py-2 rounded-md text-lg font-medium hover:bg-gray-600">Log In</a>
-        <a href="#" class="block bg-gray-800 text-white px-3 py-2 rounded-md text-lg font-medium hover:bg-gray-600">Sign Up</a>
+        <a href="{{ url_for('login_page') }}" class="block bg-gray-800 text-white px-3 py-2 rounded-md text-lg font-medium hover:bg-gray-600">Log In</a>
+        <a href="{{ url_for('register_page') }}" class="block bg-gray-800 text-white px-3 py-2 rounded-md text-lg font-medium hover:bg-gray-600">Sign Up</a>
       </div>
     </div>
   </nav>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 10000)"
+           class="flex items-center {% if category == 'success' %}bg-green-200 text-green-800{% elif category == 'error' %}bg-red-200 text-red-800{% elif category == 'warning' %}bg-yellow-200 text-yellow-800{% else %}bg-blue-200 text-blue-800{% endif %} px-4 py-3 rounded-md mb-4">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 {% if category == 'success' %}text-green-400{% elif category == 'error' %}text-red-400{% elif category == 'warning' %}text-yellow-400{% else %}text-blue-400{% endif %}" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm font-medium">{{ message }}</p>
+        </div>
+        <button @click="show = false" class="ml-auto flex-shrink-0 bg-transparent text-2xl font-semibold leading-none hover:text-gray-500" aria-label="Close">
+          &times;
+        </button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
 
   {% block content %}
 
