@@ -13,6 +13,11 @@ def home_page():
     form = ProductCodeForm()
     if form.validate_on_submit():
         return redirect(url_for('dashboard_page'))
+                                  
+    if form.errors != {}: #If there are not errors from the validations
+        for err_msg in form.errors.values():
+            flash(f'Incorrect URL or ID: {err_msg}', category='danger')
+
     return render_template('home.html', form=form)
 
 @app.route("/about")
@@ -65,5 +70,6 @@ def logout_page():
 
 
 @app.route('/dashboard')
+@login_required
 def dashboard_page():
     return render_template('dashboard.html')
