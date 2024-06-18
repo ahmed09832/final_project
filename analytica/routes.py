@@ -1,9 +1,26 @@
 from flask import Flask, render_template, redirect, url_for, flash
 from analytica.forms import ProductCodeForm, RegisterForm, LoginForm
 from analytica.models import User
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
+from flask_mail import Message
+from analytica import app, db, mail
 
-from analytica import app, db
+import secrets
+
+
+def send_verification_email(user):
+    token = user.confirm_token
+    msg = Message('Email Verification', sender='ahmedshawaly70@gmail.com', recipients=[user.email_address])
+    msg.body = f'''To verify your email, visit the following link:
+{url_for('verify_email', token=token, _external=True)}
+
+If you did not make this request then simply ignore this email.
+'''
+    try:
+        mail.send(msg)
+        print("Email sent successfully!")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
 
 
 
@@ -29,16 +46,26 @@ def about_page():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register_page():
+    if current_user.is_authenticated:
+        return redirect(url_for('home_page'))
     form = RegisterForm()
     if form.validate_on_submit():
         user_to_create = User(username=form.username.data,
                               email_address=form.email_address.data,
-                              password=form.password1.data)
+                              password=form.password1.data, 
+                              confirm_token=secrets.token_urlsafe(16))
         db.session.add(user_to_create)
         db.session.commit()
-        login_user(user_to_create)
-        flash(f"Account created successfully! You are now logged in as {user_to_create.username}", category='success')
-        return redirect(url_for('home_page'))
+
+        send_verification_email(user_to_create)
+        flash('An email has been sent with instructions to verify your email.', 'info')
+        return redirect(url_for('login_page'))
+
+        # login_user(user_to_create)
+        # flash(f"Account created successfully! You are now logged in as {user_to_create.username}", category='success')
+        # return redirect(url_for('home_page'))
+
+
     if form.errors != {}: #If there are not errors from the validations
         for err_msg in form.errors.values():
             flash(f'There was an error with creating a user: {err_msg}', category='danger')
@@ -48,17 +75,23 @@ def register_page():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
+    if current_user.is_authenticated:
+        return redirect(url_for('home_page'))
     form = LoginForm()
     if form.validate_on_submit():
-        attempted_user = User.query.filter_by(username=form.email_address.data).first()
+        attempted_user = User.query.filter_by(email_address=form.email_address.data).first()
         if attempted_user and attempted_user.check_password_correction(
                 attempted_password=form.password.data
         ):
-            login_user(attempted_user)
-            flash(f'Success! You are logged in as: {attempted_user.username}', category='success')
-            return redirect(url_for('market_page'))
+            if attempted_user.confirmed:
+                login_user(attempted_user)
+                flash(f'Success! You are logged in as: {attempted_user.username}', category='success')
+                return redirect(url_for('home_page'))
+            else:
+                flash('Please verify your email before logging in.', 'warning')
+
         else:
-            flash('Username and password are not match! Please try again', category='danger')
+            flash('Email Address and password are not match! Please try again', category='danger')
 
     return render_template('login.html', form=form)
 
@@ -67,6 +100,20 @@ def logout_page():
     logout_user()
     flash("You have been logged out!", category='info')
     return redirect(url_for("home_page"))
+
+@app.route("/verify_email/<token>")
+def verify_email(token):
+    user = User.query.filter_by(confirm_token=token).first_or_404()
+    if user:
+        user.confirmed = True
+        user.confirm_token = None
+        db.session.commit()
+        flash('Your account has been verified!', 'success')
+        return redirect(url_for('login_page'))
+    else:
+        flash('The verification link is invalid or has expired.', 'danger')
+        return redirect(url_for('register'))
+
 
 
 @app.route('/dashboard')

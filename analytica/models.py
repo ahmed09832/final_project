@@ -1,5 +1,5 @@
 from analytica import db, bycrypt, login_manager
-
+from datetime import datetime
 from flask_login import UserMixin
 
 @login_manager.user_loader
@@ -13,6 +13,11 @@ class User(db.Model, UserMixin):
     email_address = db.Column(db.String(length=50), nullable=False, unique=True)
     password_hash = db.Column(db.String(length=60), nullable=False)
     analyzed_products_num = db.Column(db.Integer(), default=0, nullable=False)
+
+    confirmed = db.Column(db.Boolean, nullable=False, default=False)
+    confirm_token = db.Column(db.String(60), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
 
     @property
     def password(self):
