@@ -1,10 +1,11 @@
 from flask import Flask, render_template, redirect, url_for, flash
-from analytica.forms import ProductCodeForm, RegisterForm, LoginForm
+from analytica.forms import ProductCodeForm, RegisterForm, LoginForm, RequestResetForm, ResetPasswordForm
 from analytica.models import User
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_mail import Message
 from analytica import app, db, mail
 
+# from analytica.utils import send_reset_email
 import secrets
 
 
@@ -22,6 +23,16 @@ If you did not make this request then simply ignore this email.
     except Exception as e:
         print(f"Failed to send email: {e}")
 
+
+def send_reset_email(user):
+    token = user.get_reset_token()
+    msg = Message('Password Reset Request', sender='ahmedshawaly70@gmail.com', recipients=[user.email_address])
+    msg.body = f'''To reset your password, visit the following link:
+{url_for('reset_token', token=token, _external=True)}
+
+If you did not make this request then simply ignore this email.
+'''
+    mail.send(msg)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -112,7 +123,7 @@ def verify_email(token):
         return redirect(url_for('login_page'))
     else:
         flash('The verification link is invalid or has expired.', 'danger')
-        return redirect(url_for('register'))
+        return redirect(url_for('register_page'))
 
 
 
@@ -120,3 +131,35 @@ def verify_email(token):
 @login_required
 def dashboard_page():
     return render_template('dashboard.html')
+
+
+
+
+@app.route("/reset_password", methods=['GET', 'POST'])
+def reset_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    form = RequestResetForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email_address=form.email_address.data).first()
+        send_reset_email(user)
+        flash('An email has been sent with instructions to reset your password.', 'info')
+        return redirect(url_for('login_page'))
+    return render_template('reset_request.html', form=form)
+
+@app.route("/reset_password/<token>", methods=['GET', 'POST'])
+def reset_token(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('home_page'))
+    user = User.verify_reset_token(token)
+    print(user.email_address, user.username)
+    if user is None:
+        flash('That is an invalid or expired token', 'warning')
+        return redirect(url_for('reset_request'))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.password = form.password.data
+        db.session.commit()
+        flash('Your password has been updated! You are now able to log in', 'success')
+        return redirect(url_for('login_page'))
+    return render_template('reset_token.html', form=form)
