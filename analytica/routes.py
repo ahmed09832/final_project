@@ -40,13 +40,25 @@ If you did not make this request then simply ignore this email.
 def home_page():
     form = ProductCodeForm()
     if form.validate_on_submit():
-        return redirect(url_for('dashboard_page'))
-                                  
-    if form.errors != {}: #If there are not errors from the validations
+        if current_user.is_authenticated:
+            if current_user.analyzed_products_num < 4:
+                current_user.analyzed_products_num += 1
+                db.session.commit()
+                return redirect(url_for('dashboard_page'))
+            else:
+                flash('You have reached the limit of analyzed products.', category='danger')
+        else:
+            return redirect(url_for('login_page'))
+
+    if form.errors != {}: # If there are not errors from the validations
         for err_msg in form.errors.values():
             flash(f'Incorrect URL or ID: {err_msg}', category='danger')
 
     return render_template('home.html', form=form)
+
+
+
+
 
 @app.route("/about")
 def about_page():
