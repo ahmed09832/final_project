@@ -1,6 +1,5 @@
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-# from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
-
+import jwt
+from datetime import datetime, timedelta
 
 from analytica import db, bycrypt, login_manager, app
 from datetime import datetime
@@ -35,14 +34,19 @@ class User(db.Model, UserMixin):
        return bycrypt.check_password_hash(self.password_hash, attempted_password)
 
     def get_reset_token(self, expires_sec=1800):
-        s = Serializer(app.config['SECRET_KEY'], expires_sec)
-        return s.dumps({'user_id': self.id}).decode('utf-8')
+        payload = {
+            "user_id": self.id,
+            "exp": datetime.utcnow() + timedelta(hours=1)  # Expires in 1 hour
+        }
+
+        return jwt.encode(payload, app.config['SECRET_KEY'], algorithm="HS256")
+
 
     @staticmethod
     def verify_reset_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
         try:
-            user_id = s.loads(token)['user_id']
+            user_id = jwt.decode(token, 
+                                 app.config['SECRET_KEY'], algorithms=["HS256"], options={"verify_exp": True})['user_id']
         except:
             return None
         return User.query.get(user_id)
