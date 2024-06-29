@@ -4,13 +4,70 @@ from analytica.models import User
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_mail import Message
 from analytica import app, db, mail
-
+from analytica.scraping import get_reviews
+from analytica.predictions import get_sentiments, get_top_text_bysize
 # from analytica.utils import send_reset_email
 import secrets
+import numpy as np
+import plotly.express as px
+
+
+
+# Define the variables globally
+pie_fig = None
+bar_fig_left = None
+bar_fig_right = None
+pos_reviews = None
+neg_reviews = None
+
+
+
+def generate_plots_and_wordclouds(sentiments):
+    global pie_fig, bar_fig_left, bar_fig_right, pos_reviews, neg_reviews
+    
+    # Extract positive and negative reviews
+    pos_reviews = [review for review, sentiment in sentiments if sentiment == 1]
+    neg_reviews = [review for review, sentiment in sentiments if sentiment == 0]
+    
+    # Data for the pie chart
+    labels, counts = np.unique([sentiment for _, sentiment in sentiments], return_counts=True)
+    pie_data = dict(zip(labels, counts))
+
+    # Customize pie chart appearance
+    pie_fig = px.pie(names=pie_data.keys(), values=pie_data.values(), hole=0.3,
+                     labels={'labels': 'Sentiment'},
+                     color_discrete_sequence=px.colors.qualitative.Set2)
+
+    # Data for horizontal bar charts
+    top_pos_text = get_top_text_bysize(pos_reviews)
+    top_neg_text = get_top_text_bysize(neg_reviews)
+
+    bar_data_left = top_pos_text.sort_values()
+    bar_data_right = top_neg_text.sort_values()
+    
+    # Customize horizontal bar charts appearance
+    bar_fig_left = px.bar(x=bar_data_left.values, y=bar_data_left.index, orientation='h',
+                          color_discrete_sequence=px.colors.qualitative.Plotly)
+    bar_fig_right = px.bar(x=bar_data_right.values, y=bar_data_right.index, orientation='h',
+                           color_discrete_sequence=px.colors.qualitative.Plotly)
+
+    bar_fig_right.update_layout(
+        xaxis_title='Count',
+        yaxis_title='Top Negative Bigrams'
+    )
+
+    bar_fig_left.update_layout(
+        xaxis_title='Count',
+        yaxis_title='Top Positive Bigrams'
+    )
+
+
+
+
 
 
 def send_verification_email(user):
-    token = user.confirm_token
+    token = user.confirm_token   
     msg = Message('Email Verification', sender='ahmedshawaly70@gmail.com', recipients=[user.email_address])
     msg.body = f'''To verify your email, visit the following link:
 {url_for('verify_email', token=token, _external=True)}
@@ -41,9 +98,21 @@ def home_page():
     form = ProductCodeForm()
     if form.validate_on_submit():
         if current_user.is_authenticated:
-            if current_user.analyzed_products_num < 4:
+            if current_user.analyzed_products_num < 100:
                 current_user.analyzed_products_num += 1
                 db.session.commit()
+
+                reviews = get_reviews(form.product_url_or_code.data)
+
+
+                sentiments = get_sentiments(reviews)
+                print(sentiments)
+
+                global pie_fig, bar_fig_left, bar_fig_right
+                if pie_fig is None or bar_fig_left is None or bar_fig_right is None:
+                    generate_plots_and_wordclouds(sentiments)
+
+
                 return redirect(url_for('dashboard_page'))
             else:
                 flash('You have reached the limit of analyzed products.', category='danger')
@@ -142,7 +211,14 @@ def verify_email(token):
 @app.route('/dashboard')
 @login_required
 def dashboard_page():
-    return render_template('dashboard.html')
+    
+    pos_summary, neg_summary = 'this is pos', 'this is neg'
+
+    return render_template('dashboard.html', pie_html=pie_fig.to_html(full_html=False),
+                        bar_left_html=bar_fig_left.to_html(full_html=False),
+                        bar_right_html=bar_fig_right.to_html(full_html=False),
+                        pos_summary=pos_summary, neg_summary=neg_summary)
+
 
 
 
