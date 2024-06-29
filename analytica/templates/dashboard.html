@@ -9,9 +9,127 @@
 
 {% block styles %}
 
+<style>
+
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #ffffcc;
+        margin: 0;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-rows: repeat(3, minmax(100px, 1fr));
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        padding: 20px;
+        max-width: 1200px;
+        margin: auto;
+    }
+
+    .grid-item {
+        height: 460px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 30px 30px 30px 30px;
+        overflow: hidden;
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .grid-item img {
+        width: 100%;
+        height: auto;
+    }
+
+    .list-text {
+        list-style: none;
+        padding: 10px;
+        flex: 1;
+    }
+
+    .list-text li {
+        margin-bottom: 5px;
+        font-size: 1em; /* Adjust font size for better responsiveness */
+    }
+
+    .wordcloud {
+        width: 100%;
+        height: auto;
+        flex: 1;
+    }
+
+    .custom-paragraph {
+        padding: 20px;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #333;
+    }
+
+    h3 {
+        width: 500px;
+        margin-top: 9px;
+        margin-left: 30px;
+        padding: 10px;
+        background-color: #B31312;
+        color: #fff;
+        border-radius: 40px 40px 40px 40px;
+        text-align: center;
+    }
+
+    @media (max-width: 768px) {
+        .grid-container {
+            grid-template-columns: 1fr;
+        }
+
+        h3 {
+            font-size: 1.5em; /* Adjust font size for better responsiveness on smaller screens */
+        }
+    }
+
+</style>
 {% endblock %}
 
 
 {% block content %}
-    <h1>Welcome to the dashboard page</h1>
+
+<body>
+
+    <div class="grid-container">
+        <!-- First Row -->
+        <div class="grid-item">
+            <h3>Distribution of Sentiment</h3>
+            <div id="pie-chart">{{ pie_html|safe }}</div>
+        </div>
+        <div class="grid-item">
+            <h3>Card Title</h3>
+            <ul class="list-text">
+                <li>Total Number of Reviews is 1000</li>
+                <li>Total Number of Positive Reviews is 700</li>
+                <li>Total Number of Negative Reviews is 300</li>
+            </ul>
+        </div>
+
+        <!-- Second Row -->
+        <div class="grid-item">
+            <h3>Top Repeated Positive Sentence</h3>
+            <div id="bar-chart-left">{{ bar_left_html|safe }}</div>
+        </div>
+        <div class="grid-item">
+            <h3>Top Repeated Negative Sentence</h3>
+            <div id="bar-chart-right">{{ bar_right_html|safe }}</div>
+        </div>
+
+        <!-- Third Row -->
+        <div class="grid-item" id="header1">
+            <h3>Summarization of Positive Reviews</h3>
+            <div class="custom-paragraph">{{ pos_summary }}</div>
+        </div>
+        <div class="grid-item" id="header2">
+            <h3>Summarization of Negative Reviews</h3>
+            <div class="custom-paragraph">{{ neg_summary }}</div>
+        </div>
+    </div>
+</body>
+
 {% endblock %}
