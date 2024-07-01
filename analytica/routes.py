@@ -109,8 +109,7 @@ def home_page():
                 print(sentiments)
 
                 global pie_fig, bar_fig_left, bar_fig_right
-                if pie_fig is None or bar_fig_left is None or bar_fig_right is None:
-                    generate_plots_and_wordclouds(sentiments)
+                generate_plots_and_wordclouds(sentiments)
 
 
                 return redirect(url_for('dashboard_page'))
@@ -230,8 +229,12 @@ def reset_request():
     form = RequestResetForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email_address=form.email_address.data).first()
-        send_reset_email(user)
-        flash('An email has been sent with instructions to reset your password.', 'info')
+        if user:
+            send_reset_email(user)
+        flash('If an account with that email exists, an email has been sent with instructions to reset your password.', 'info')
+
+        # send_reset_email(user)
+        # flash('An email has been sent with instructions to reset your password.', 'info')
         return redirect(url_for('login_page'))
     return render_template('reset_request.html', form=form)
 
@@ -250,3 +253,12 @@ def reset_token(token):
         flash('Your password has been updated! You are now able to log in', 'success')
         return redirect(url_for('login_page'))
     return render_template('reset_token.html', form=form)
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
