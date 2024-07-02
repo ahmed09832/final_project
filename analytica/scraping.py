@@ -1,6 +1,17 @@
 import requests
 from urllib.parse import urlencode
 from bs4 import BeautifulSoup
+import re
+
+
+def extract_asin(url):
+    # Regular expression to find the ASIN
+    asin_pattern = r'/dp/([A-Z0-9]{10})|/product/([A-Z0-9]{10})'
+    match = re.search(asin_pattern, url)
+    if match:
+        return match.group(1) if match.group(1) else match.group(2)
+    else:
+        return None
 
 
 def get_html_content(asin, page_num=1):
