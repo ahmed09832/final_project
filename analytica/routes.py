@@ -3,35 +3,37 @@ from analytica.forms import ProductCodeForm, RegisterForm, LoginForm, RequestRes
 from analytica.models import User
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_mail import Message
-from analytica import app, db, mail
+from analytica import app, db, mail, mongo_client
 from analytica.scraping import get_reviews
-from analytica.predictions import get_sentiments, get_top_text_bysize
+from analytica.predictions import get_sentiments, get_top_text_bysize, summarize
 # from analytica.utils import send_reset_email
 import secrets
 import numpy as np
 import plotly.express as px
 
 
-
 # Define the variables globally
 pie_fig = None
 bar_fig_left = None
 bar_fig_right = None
-pos_reviews = None
-neg_reviews = None
+pos_summary = None
+neg_summary = None
+pos_len = None
+neg_len = None
 
 
 
-def generate_plots_and_wordclouds(sentiments):
-    global pie_fig, bar_fig_left, bar_fig_right, pos_reviews, neg_reviews
+def generate_plots_and_wordclouds(pos_reviews, neg_reviews):
+    global pie_fig, bar_fig_left, bar_fig_right, pos_len, neg_len
     
     # Extract positive and negative reviews
-    pos_reviews = [review for review, sentiment in sentiments if sentiment == 1]
-    neg_reviews = [review for review, sentiment in sentiments if sentiment == 0]
     
     # Data for the pie chart
-    labels, counts = np.unique([sentiment for _, sentiment in sentiments], return_counts=True)
-    pie_data = dict(zip(labels, counts))
+    pos_len = len(pos_reviews)
+    neg_len = len(neg_reviews)
+
+    pie_data = {"Positive": pos_len,
+                "Negative": neg_len}
 
     # Customize pie chart appearance
     pie_fig = px.pie(names=pie_data.keys(), values=pie_data.values(), hole=0.3,
@@ -92,41 +94,94 @@ If you did not make this request then simply ignore this email.
     mail.send(msg)
 
 
+from sqlalchemy.exc import SQLAlchemyError
+
+
+
+import json
+from plotly.utils import PlotlyJSONEncoder
+import plotly.graph_objs as go
+
+
+def serialize_plotly_figure(fig):
+    return json.dumps(fig, cls=PlotlyJSONEncoder)
+
+
+def deserialize_plotly_figure(fig_json):
+    fig_dict = json.loads(fig_json)
+    return go.Figure(fig_dict)
+
+
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/home', methods=['GET', 'POST'])
 def home_page():
     form = ProductCodeForm()
     if form.validate_on_submit():
         if current_user.is_authenticated:
-            if current_user.analyzed_products_num < 100:
-                current_user.analyzed_products_num += 1
-                db.session.commit()
-
-                reviews = get_reviews(form.product_url_or_code.data)
+            global pie_fig, bar_fig_left, bar_fig_right, pos_summary, neg_summary, pos_len, neg_len 
 
 
-                sentiments = get_sentiments(reviews)
-                print(sentiments)
+            db_mongo = mongo_client.analytica_project
+            user_reviews_graphs_collection = db_mongo.user_reviews_graphs
 
-                global pie_fig, bar_fig_left, bar_fig_right
-                generate_plots_and_wordclouds(sentiments)
+            returned_graph = user_reviews_graphs_collection.find_one({"asin": form.product_url_or_code.data})
 
-
+            # if returned_graph:
+            #     pie_fig = deserialize_plotly_figure(returned_graph['pie_fig'])
+            #     bar_fig_left = deserialize_plotly_figure(returned_graph['bar_fig_left'])
+            #     bar_fig_right = deserialize_plotly_figure(returned_graph['bar_fig_right'])
+            if returned_graph:
+                pie_fig = go.Figure(deserialize_plotly_figure(returned_graph['pie_fig']))
+                bar_fig_left = go.Figure(deserialize_plotly_figure(returned_graph['bar_fig_left']))
+                bar_fig_right = go.Figure(deserialize_plotly_figure(returned_graph['bar_fig_right']))
+                pos_summary = returned_graph['pos_summary']
+                neg_summary = returned_graph['neg_summary']
+                pos_len = returned_graph['pos_len']
+                neg_len = returned_graph['neg_len']
                 return redirect(url_for('dashboard_page'))
+
+            elif current_user.analyzed_products_num < 100:
+                try:
+                    current_user.analyzed_products_num += 1
+                    db.session.commit()
+
+                    reviews = get_reviews(form.product_url_or_code.data)
+
+                    pos_reviews, neg_reviews = get_sentiments(reviews)
+
+                    generate_plots_and_wordclouds(pos_reviews, neg_reviews)
+                    pos_summary, neg_summary = summarize(pos_reviews, neg_reviews)
+                    
+                    # Serialize the figures before storing in MongoDB
+                    result = user_reviews_graphs_collection.insert_one({
+                        "asin": form.product_url_or_code.data,
+                        "pie_fig": serialize_plotly_figure(pie_fig),
+                        "bar_fig_left": serialize_plotly_figure(bar_fig_left),
+                        "bar_fig_right": serialize_plotly_figure(bar_fig_right),
+                        'pos_summary': pos_summary,
+                        'neg_summary': neg_summary,
+                        'pos_len': pos_len,
+                        'pos_len': pos_len,
+                    })
+
+                    return redirect(url_for('dashboard_page'))
+                except SQLAlchemyError as e:
+                    db.session.rollback()
+                    flash('An error occurred while processing your request.', category='danger')
+                    print(f"SQLAlchemy error: {str(e)}")
+                except Exception as e:
+                    flash('An unexpected error occurred.', category='danger')
+                    print(f"Unexpected error: {str(e)}")
             else:
                 flash('You have reached the limit of analyzed products.', category='danger')
         else:
             return redirect(url_for('login_page'))
 
-    if form.errors != {}: # If there are not errors from the validations
+    if form.errors != {}:
         for err_msg in form.errors.values():
             flash(f'Incorrect URL or ID: {err_msg}', category='danger')
 
     return render_template('home.html', form=form)
-
-
-
-
 
 @app.route("/about")
 def about_page():
@@ -207,19 +262,38 @@ def verify_email(token):
 
 
 
+# @app.route('/dashboard')
+# @login_required
+# def dashboard_page():
+    
+#     pos_summary, neg_summary = 'this is pos', 'this is neg'
+
+#     return render_template('dashboard.html', pie_html=pie_fig.to_html(full_html=False),
+#                         bar_left_html=bar_fig_left.to_html(full_html=False),
+#                         bar_right_html=bar_fig_right.to_html(full_html=False),
+#                         pos_summary=pos_summary, neg_summary=neg_summary)
+
+
 @app.route('/dashboard')
 @login_required
 def dashboard_page():
-    
-    pos_summary, neg_summary = 'this is pos', 'this is neg'
+    global pie_fig, bar_fig_left, bar_fig_right
 
-    return render_template('dashboard.html', pie_html=pie_fig.to_html(full_html=False),
-                        bar_left_html=bar_fig_left.to_html(full_html=False),
-                        bar_right_html=bar_fig_right.to_html(full_html=False),
-                        pos_summary=pos_summary, neg_summary=neg_summary)
+    # Ensure the figures are Plotly Figure objects
+    if isinstance(pie_fig, dict):
+        pie_fig = go.Figure(pie_fig)
+    if isinstance(bar_fig_left, dict):
+        bar_fig_left = go.Figure(bar_fig_left)
+    if isinstance(bar_fig_right, dict):
+        bar_fig_right = go.Figure(bar_fig_right)
 
-
-
+    return render_template('dashboard.html', 
+                           pie_html=pie_fig.to_html(full_html=False),
+                           bar_left_html=bar_fig_left.to_html(full_html=False),
+                           bar_right_html=bar_fig_right.to_html(full_html=False),
+                           pos_summary=pos_summary, neg_summary=neg_summary, 
+                           neg_len=neg_len, pos_len=pos_len,
+                             total_len=int(pos_len) + int(neg_len))
 
 
 @app.route("/reset_password", methods=['GET', 'POST'])
@@ -255,10 +329,10 @@ def reset_token(token):
     return render_template('reset_token.html', form=form)
 
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
+# @app.errorhandler(404)
+# def page_not_found(e):
+#     return render_template('404.html'), 404
 
-@app.errorhandler(500)
-def internal_server_error(e):
-    return render_template('500.html'), 500
+# @app.errorhandler(500)
+# def internal_server_error(e):
+#     return render_template('500.html'), 500

@@ -1,4 +1,4 @@
-from analytica import sess, roberta_tokenizer
+from analytica import sess, roberta_tokenizer, t5_model, t5_tokenizer
 import numpy as np
 import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
@@ -70,12 +70,32 @@ def get_sentiments(sentences):
     result = sess.run(None, input_feed)
     result = np.argmax(result, axis=-1)
     result = list(zip(sentences, result[0]))
-    return result
+    pos_reviews = [review for review, sentiment in result if sentiment == 1]
+    neg_reviews = [review for review, sentiment in result if sentiment == 0]
+    return pos_reviews, neg_reviews
 
 
 
+def summarize(pos_rev, neg_rev):
+    pos_rev = ' '.join(pos_rev)
+    neg_rev = ' '.join(neg_rev)
 
+    # preprocess the pos&neg input text
+    pos_t5_input_text = 'summarize: ' + pos_rev
+    neg_t5_input_text = 'summarize: ' + neg_rev
 
+    # Tokenize the input texts
+    pos_tokenized_text = t5_tokenizer.encode(pos_t5_input_text, return_tensors='pt', max_length=400, truncation=True)
+    neg_tokenized_text = t5_tokenizer.encode(neg_t5_input_text, return_tensors='pt', max_length=400, truncation=True)
+
+    # Generate summaries
+    pos_summary_ids = t5_model.generate(pos_tokenized_text, max_length=150, min_length=40, num_beams=4)
+    pos_summary = t5_tokenizer.decode(pos_summary_ids[0], skip_special_tokens=True)
+
+    neg_summary_ids = t5_model.generate(neg_tokenized_text, max_length=150, min_length=40, num_beams=4)
+    neg_summary = t5_tokenizer.decode(neg_summary_ids[0], skip_special_tokens=True)
+
+    return pos_summary, neg_summary
 
 
 
