@@ -16,7 +16,7 @@ def extract_asin(url):
 
 def get_html_content(asin, page_num=1):
     proxy_params = {
-      'api_key': '7b79551e-7fe0-4def-8254-c45bb8b4dc78',
+      'api_key': '1fc97859-ac6d-42d3-9698-010dde41b4ad',
       'url': f'https://www.amazon.com/product-reviews/{asin}/ref=cm_cr_arp_d_viewopt_srt?ie=UTF8&reviewerType=all_reviews&sortBy=recent&pageNumber={page_num}', 
       'render_js': True,
       }
