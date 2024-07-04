@@ -4,7 +4,7 @@ from analytica.models import User
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_mail import Message
 from analytica import app, db, mail, mongo_client
-from analytica.scraping import get_reviews
+from analytica.scraping import get_reviews, extract_asin
 from analytica.predictions import get_sentiments, get_top_text_bysize, get_summarization
 # from analytica.utils import send_reset_email
 import secrets
@@ -38,7 +38,8 @@ def generate_plots_and_wordclouds(pos_reviews, neg_reviews):
     # Customize pie chart appearance
     pie_fig = px.pie(names=pie_data.keys(), values=pie_data.values(), hole=0.3,
                      labels={'labels': 'Sentiment'},
-                     color_discrete_sequence=px.colors.qualitative.Set2)
+                     color_discrete_sequence=px.colors.qualitative.Set2,
+                     category_orders={"names": ["Positive", "Negative"]})
 
     # Data for horizontal bar charts
     top_pos_text = get_top_text_bysize(pos_reviews)
@@ -54,13 +55,13 @@ def generate_plots_and_wordclouds(pos_reviews, neg_reviews):
                            color_discrete_sequence=px.colors.qualitative.Plotly)
 
     bar_fig_right.update_layout(
-        xaxis_title='Count',
-        yaxis_title='Top Negative Bigrams'
+        xaxis_title='',
+        yaxis_title=''
     )
 
     bar_fig_left.update_layout(
-        xaxis_title='Count',
-        yaxis_title='Top Positive Bigrams'
+        xaxis_title='',
+        yaxis_title=''
     )
 
 
@@ -123,8 +124,9 @@ def home_page():
 
             db_mongo = mongo_client.analytica_project
             user_reviews_graphs_collection = db_mongo.user_reviews_graphs
+            product_code = extract_asin(form.product_url_or_code.data)
 
-            returned_graph = user_reviews_graphs_collection.find_one({"asin": form.product_url_or_code.data})
+            returned_graph = user_reviews_graphs_collection.find_one({"asin": product_code})
 
             # if returned_graph:
             #     pie_fig = deserialize_plotly_figure(returned_graph['pie_fig'])
@@ -145,7 +147,7 @@ def home_page():
                     current_user.analyzed_products_num += 1
                     db.session.commit()
 
-                    reviews = get_reviews(form.product_url_or_code.data)
+                    reviews = get_reviews(product_code)
 
                     pos_reviews, neg_reviews = get_sentiments(reviews)
 
@@ -158,7 +160,7 @@ def home_page():
                     
                     # Serialize the figures before storing in MongoDB
                     result = user_reviews_graphs_collection.insert_one({
-                        "asin": form.product_url_or_code.data,
+                        "asin": product_code,
                         "pie_fig": serialize_plotly_figure(pie_fig),
                         "bar_fig_left": serialize_plotly_figure(bar_fig_left),
                         "bar_fig_right": serialize_plotly_figure(bar_fig_right),
