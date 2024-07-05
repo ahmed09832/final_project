@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 import re
 import numpy as np
+import os
 
 def extract_asin(url):
     # Regular expression to find the ASIN
@@ -13,12 +14,14 @@ def extract_asin(url):
     else:
         return None
     
+# '8ec02ed2-1a67-492e-8599-7a47141f2565'
 
-api_key = '8ec02ed2-1a67-492e-8599-7a47141f2565'
+api_key_1 = os.getenv('api_key_1')
+api_key_2 = os.getenv('api_key_2')
 
 def get_html_content_pos(asin, page_num=1):
     proxy_params = {
-        'api_key': api_key,
+        'api_key': api_key_2,
         'url' : f"https://www.amazon.com/product-reviews/{asin}/ref=cm_cr_getr_d_paging_btm_next_2?ie=UTF8&reviewerType=all_reviews&sortBy=helpful&pageNumber={page_num}&filterByStar=positive",
         'render_js': True,
       }
@@ -34,7 +37,7 @@ def get_html_content_pos(asin, page_num=1):
 
 def get_html_content_neg(asin, page_num=1):
     proxy_params = {
-        'api_key': api_key,
+        'api_key': api_key_1,
         'url' : f"https://www.amazon.com/product-reviews/{asin}/ref=cm_cr_arp_d_viewopt_sr?ie=UTF8&reviewerType=all_reviews&sortBy=helpful&pageNumber={page_num}&filterByStar=critical",
         'render_js': True,
       }

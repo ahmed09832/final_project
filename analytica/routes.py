@@ -172,13 +172,24 @@ def home_page():
                     pos_reviews = ' '.join(pos_reviews)
                     neg_reviews = ' '.join(neg_reviews)
 
-                    if len(neg_reviews) == 0:
-                        neg_reviews = "we are not scraping anything from the negative reviews"
+                    if len(neg_reviews) <30:
+                        flash("Use a product that have more reviews for a clear Dashboard", category='info')
                    
+
+                    if len(pos_reviews) < 30:
+                        flash("Use a product that have more reviews for a clear Dashboard", category='info')
+
+
+
 
 
                     pos_summary = get_summarization(pos_reviews)[0]['translation_text']
                     neg_summary = get_summarization(neg_reviews)[0]['translation_text']
+
+                    if pos_len <= neg_len:
+                        pos_len = pos_len + neg_len + 6
+
+
 
                     
                     # Serialize the figures before storing in MongoDB
