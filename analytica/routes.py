@@ -147,13 +147,36 @@ def home_page():
                     current_user.analyzed_products_num += 1
                     db.session.commit()
 
-                    reviews = get_reviews(product_code)
+                    reviews = None
+
+                    if product_code:
+                        
+                        try:
+                            reviews = get_reviews(product_code)
+                            
+                        except Exception as e:
+                            flash(f"An error occurred while scraping reviews: {str(e)}", 'error')
+
+                    else:
+                        flash("Invalid Amazon product URL", 'error')
+
 
                     pos_reviews, neg_reviews = get_sentiments(reviews)
 
+
                     generate_plots_and_wordclouds(pos_reviews, neg_reviews)
+                    pos_reviews =pos_reviews[:40]
+                    neg_reviews =neg_reviews[:40]
+                    pos_reviews = ' '.join(pos_reviews).split(' ')[:900]
+                    neg_reviews = ' '.join(neg_reviews).split(' ')[:900]
                     pos_reviews = ' '.join(pos_reviews)
                     neg_reviews = ' '.join(neg_reviews)
+
+                    if len(neg_reviews) == 0:
+                        neg_reviews = "we are not scraping anything from the negative reviews"
+                   
+
+
                     pos_summary = get_summarization(pos_reviews)[0]['translation_text']
                     neg_summary = get_summarization(neg_reviews)[0]['translation_text']
 
@@ -167,7 +190,7 @@ def home_page():
                         'pos_summary': pos_summary,
                         'neg_summary': neg_summary,
                         'pos_len': pos_len,
-                        'pos_len': pos_len,
+                        'neg_len': neg_len,
                     })
 
                     return redirect(url_for('dashboard_page'))

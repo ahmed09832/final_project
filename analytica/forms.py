@@ -4,7 +4,8 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import Email, Length, DataRequired, ValidationError, EqualTo
 from analytica.models import User
 
-from analytica.scraping import get_html_content, extract_asin
+from analytica.scraping import get_html_content_pos, extract_asin
+
 class RegisterForm(FlaskForm):
     
     def validate_username(self, username_to_check):
@@ -77,7 +78,7 @@ def is_valid_url_or_code(form, field):
         product_code = input_value
                 
     try:
-        res = get_html_content(product_code, 1)
+        res = get_html_content_pos(product_code, 1)
         if res.status_code != 200:
             raise ValidationError('The product URL is not accessible.')
     except requests.RequestException as e:

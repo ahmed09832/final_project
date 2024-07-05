@@ -1,4 +1,3 @@
-from analytica import sess, roberta_tokenizer
 import numpy as np
 import plotly.express as px
 from sklearn.feature_extraction.text import CountVectorizer
@@ -58,22 +57,12 @@ def get_top_text_bysize(corpus, ngram=(3, 3), top_num=10, stop_words='english'):
     return top_ngrams
 
 
-# Initialize tokenizer and model session
-input_names = ['input_ids', 'attention_mask']
 
 def get_sentiments(sentences):
-    inp = roberta_tokenizer(sentences,
-                            padding="max_length", truncation=True,
-                            return_tensors='np', max_length=200)
+    pos_rev = sentences[0]
+    neg_rev = sentences[1]
+    return pos_rev, neg_rev
     
-    input_feed = {input_name: inp[input_name].astype(np.int32) for input_name in input_names}
-    
-    result = sess.run(None, input_feed)
-    result = np.argmax(result, axis=-1)
-    result = list(zip(sentences, result[0]))
-    pos_reviews = [review for review, sentiment in result if sentiment == 1]
-    neg_reviews = [review for review, sentiment in result if sentiment == 0]
-    return pos_reviews, neg_reviews
 
 
 
@@ -93,8 +82,15 @@ def get_summarization(reviews):
         response = requests.post(
             f"https://api-inference.huggingface.co/models/{model_id}",
             headers=headers,
-            json={"inputs": f"summarize: {reviews}"}
-        )
+            json={"inputs": f"summarize: {reviews}",
+                  "parameters": {
+                        "max_length": 250,
+                        "min_length": 40,
+                        "num_beams": 4,
+                        "length_penalty": 2.5
+                          }
+                        }
+                        )
         
         if response.status_code == 200:
             return response.json()

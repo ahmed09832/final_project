@@ -8,9 +8,7 @@ from config import Config
 
 from pymongo.mongo_client import MongoClient
 
-import onnx 
-import onnxruntime as rt
-from transformers import RobertaTokenizerFast
+
 import os
 
 app = Flask(__name__)
@@ -49,8 +47,6 @@ mongo_client = init_mongo()
 
 
 
-roberta_tokenizer=RobertaTokenizerFast.from_pretrained(os.path.join(cwd,'models/roberta_tokenizer/'))
-sess = rt.InferenceSession(os.path.join(cwd,'models/roberta_model_quant.onnx'), providers=['CPUExecutionProvider'])
 
 
 
